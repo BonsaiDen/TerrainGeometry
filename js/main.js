@@ -6,24 +6,39 @@ var terrain;
 var util = {
 
     matrix: new THREE.Matrix4(),
+    quaternion: new THREE.Quaternion(),
 
-    rotateInWorld: function(mesh, x, y, z) {
+    rotate: function(mesh, r, offset) {
+
+        //mesh.rotation.x = 1;
+        //mesh.rotation.y = 1;
+        //mesh.rotation.z = 1;
+
+        //util.quaternion.setFromEuler(r);
+        //var d = util.quaternion.multiplyVector3(mesh.rotation, mesh.rotation);
+
+        //mesh.rotation.x *= Math.PI;
+        //mesh.rotation.y *= Math.PI;
+        //mesh.rotation.z *= Math.PI;
+
+        //console.log(d.x, d.y, d.z);
+
 
         // Reset the Matrix, Order of the rotations is important
         mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
         // First Y
-        util.matrix.makeRotationY(y);
+        util.matrix.makeRotationY(r.y);
         mesh.matrix.multiplySelf(util.matrix);
         mesh.rotation.setEulerFromRotationMatrix(mesh.matrix);
 
         // Then X
-        util.matrix.makeRotationX(x);
+        util.matrix.makeRotationX(r.x);
         mesh.matrix.multiplySelf(util.matrix);
         mesh.rotation.setEulerFromRotationMatrix(mesh.matrix);
 
         // Finally Z
-        util.matrix.makeRotationZ(z);
+        util.matrix.makeRotationZ(r.z);
         mesh.matrix.multiplySelf(util.matrix);
         mesh.rotation.setEulerFromRotationMatrix(mesh.matrix);
 
@@ -177,10 +192,12 @@ function render() {
         cube3.position.y = y3;
         cube3.position.z = z3;
 
-        var rx = terrain.getAngleAt(x, z, 1, 0),
-            rz = terrain.getAngleAt(x, z, 1, Math.PI / 2);
-
-        util.rotateInWorld(cube, rx, 0, -rz);
+        cube.useQuaternion = true;
+        cube.quaternion.setFromEuler({
+            x: terrain.getAngleAt(x, z, 1, a),
+            y: a,
+            z: terrain.getAngleAt(x, z, 1, a - Math.PI / 2)
+        });
 
     }
 
