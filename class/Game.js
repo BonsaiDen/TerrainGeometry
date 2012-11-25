@@ -1,4 +1,4 @@
-/*global Class, BaseGame, THREE, TerrainGeometry */
+/*global Class, BaseGame, THREE, TerrainGeometry, toImage */
 var Game = Class(function(update, render) {
     BaseGame(this, update, render);
 
@@ -24,14 +24,10 @@ var Game = Class(function(update, render) {
         this.scene.add(mesh);
 
         // Light
+        this.light = new THREE.PointLight( 0xffffff, 1 );
+        this.light.position.set( 0, 50, 150 );
+        this.scene.add( this.light );
 
-        light = new THREE.DirectionalLight( 0xffffff );
-        light.position.set( 1, 1, 1 );
-        this.scene.add( light );
-
-        light = new THREE.DirectionalLight( 0x002288 );
-        light.position.set( -1, -1, -1 );
-        this.scene.add( light );
 
         // Camera
         this.camera.position.set(0, 50, 150);
@@ -43,16 +39,29 @@ var Game = Class(function(update, render) {
         var uv = new Image();
         img.onload = function() {
 
-            var terrain = new TerrainGeometry(300, 300, img, 8, 8);
-            material = new THREE.MeshNormalMaterial({ color: 0xffcc00 });
-            //material = new THREE.MeshLambertMaterial( { map: new THREE.Texture(uv) , shading: THREE.SmoothShading });
+            var terrain = new TerrainGeometry(300, 300, img, 8, 32);
 
-            //material.map.needsUpdate = true;
+            var lightMap = toImage(terrain.generateLightMap(256, 1500, 256), img.width, img.height);
+
+            //material = new THREE.MeshNormalMaterial({ color: 0xffcc00 });
+            material = new THREE.MeshLambertMaterial( {
+                map: new THREE.Texture(uv),
+                lightMap: new THREE.Texture(lightMap),
+                shading: THREE.SmoothShading
+            });
+
+            terrain.computeVertexNormals();
+            terrain.faceVertexUvs[1] = terrain.faceVertexUvs[0];
+            terrain.computeVertexNormals();
+
+            material.map.needsUpdate = true;
+            material.lightMap.needsUpdate = true;
             //material.wireframe = true;
 
             mesh = new THREE.Mesh(terrain, material);
             that.scene.add(mesh);
             that.terrain = terrain;
+            that.terrainMesh = mesh;
 
             that.start();
 
@@ -60,6 +69,21 @@ var Game = Class(function(update, render) {
 
         uv.src = 'images/uv.png';
         img.src = 'images/height.png';
+
+        document.addEventListener('mouseup', function() {
+
+            var p = that.camera.position;
+            var sx = ~~(img.width / 2 + p.x),
+                sy = ~~(img.height / 2 + p.y) * 4,
+                sz = ~~(img.height / 2 + p.z);
+
+            that.light.position = p;
+
+            var lightMap = toImage(that.terrain.generateLightMap(sx, sy, sz), img.width, img.height);
+            that.terrainMesh.material.lightMap = new THREE.Texture(lightMap);
+            that.terrainMesh.material.lightMap.needsUpdate = true;
+
+        }, false);
 
     },
 
@@ -72,6 +96,7 @@ var Game = Class(function(update, render) {
 
             var x = 0, //Math.sin(this.cubeOffset) * 40, //-40, //
                 z = Math.cos(this.cubeOffset) * 40;
+
 
             this.cube.position.x = x;
             this.cube.position.y = (this.terrain.getHeightAt(x, z) || 0) + 2;
@@ -91,4 +116,34 @@ var Game = Class(function(update, render) {
     }
 
 });
+
+
+function toImage(map, width, height) {
+
+    var canvas = document.createElement('canvas'),
+        context = canvas.getContext('2d');
+
+    canvas.width = width;
+    canvas.height = height;
+
+    var data = context.getImageData(0, 0, width, height),
+        pix = data.data,
+        i = 0;
+
+    for(var z = 0; z < height; z++) {
+
+        for(var x = 0; x < width; x++) {
+            var value = map[z * width + x];
+            pix[i] = pix[i + 1] = pix[i + 2] = value;
+            pix[i + 3] = 255;
+            i += 4;
+        }
+
+    }
+
+    context.putImageData(data, 0, 0);
+
+    return canvas;
+
+}
 

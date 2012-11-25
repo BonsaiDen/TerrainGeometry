@@ -89,6 +89,14 @@
 
         },
 
+        generateLightMap: function(sx, sy, sz) {
+
+            var smap = new Uint8Array(this.cols * this.rows);
+            return this._createLightMap(this._heightData, smap, this.cols, this.rows, sx, sy, sz);
+
+        },
+
+
         // Internals --------------------------------------------------------------
         getQuadHeightAt: function(x, z, qid) {
 
@@ -147,87 +155,6 @@
 
         },
 
-        getRectPointAt: function(map, x, z) {
-
-            var row = map[z];
-            if (row !== undefined) {
-                return row[x] !== undefined ? row[x] : null;
-
-            } else {
-                return null;
-            }
-
-        },
-
-        getRectAt: function(map, used, sx, sz) {
-
-            var startValue = this.getRectPointAt(map, sx, sz),
-                size = 1;
-
-            outer: while(true) {
-
-                for(var z = sz; z < sz + size; z++) {
-                    for(var x = sx; x < sx + size; x++) {
-
-                        var val = this.getRectPointAt(map, x, z),
-                            isUsed = used[z] && used[z][x];
-
-                        if (val !== startValue || isUsed) {
-                            break outer;
-                        }
-
-                    }
-                }
-
-                size++;
-
-            }
-
-            return [size - 1, size - 1, startValue];
-
-        },
-
-        getRectangles: function(map) {
-
-            console.time('getRectangles');
-
-            var x, xl,
-                z, zl,
-                faces = {};
-
-            // Find biggest rectangle
-            var used = new Array(this.rows);
-            for(z = 0, zl = this.rows; z < zl; z++) {
-                used[z] = new Array(this.cols);
-                for(x = 0, xl = this.cols; x < xl; x++) {
-                    used[z][x] = false;
-                }
-            }
-
-            var rects = [];
-            for(z = 0, zl = this.rows; z < zl; z++) {
-                for(x = 0, xl = this.cols; x < xl; x++) {
-
-                    if (!used[z][x]) {
-
-                        var rect = this.getRectAt(map, used, x, z);
-                        for(var gz = z, gzl = z + rect[1]; gz < gzl; gz++) {
-                            for(var gx = x, gxl = x + rect[0]; gx < gxl; gx++) {
-                                used[gz][gx] = true;
-                            }
-                        }
-
-                        rects.push([x, z, rect[0], rect[1], rect[2], false]);
-
-                    }
-
-                }
-            }
-
-            console.timeEnd('getRectangles');
-            return rects;
-
-        },
 
         // Generation ---------------------------------------------------------
         _fromArray: function(data, scale, cols, rows) {
@@ -245,17 +172,14 @@
             this._quadHeight = this.height / this.rows;
             this._quadGrid = null;
             this._quadList = null;
+            this._heightData = data;
 
-            var faceHeights = this._parseHeight(data, scale);
-
-            this._createGeometry(this.getRectangles(faceHeights));
+            this._createGeometry(this._getRectangles(this._parseHeight(data, scale)));
             this._vertexHeight = null;
 
         },
 
         _loadImage: function(img, smoothing) {
-
-            console.time('loadImage');
 
             smoothing = smoothing || 0.1;
 
@@ -279,21 +203,15 @@
                 i += 4;
             }
 
-            console.timeEnd('loadImage');
-
             return map;
 
         },
 
         _parseHeight: function(data, scale) {
 
-            console.time('parseHeight');
-
             var x, z,
                 cols1 = this.cols + 1,
-                rows1 = this.rows + 1,
-                w2 = this.width / 2,
-                h2 = this.height / 2;
+                rows1 = this.rows + 1;
 
             this._vertexHeight = new Float32Array(rows1 * cols1);
             for(z = 0; z < rows1; z++) {
@@ -325,36 +243,106 @@
             }
 
             // Generate Face height data
-            var faceHeights = new Array(this.rows);
+            var faceHeights = new Float32Array(this.rows * this.cols);
             this._quadGrid = new Array(this.rows * this.cols);
 
             var v = this._vertexHeight;
             for(z = 0; z < this.rows; z++) {
 
-                faceHeights[z] = new Array(this.cols);
-
                 for(x = 0; x < this.cols; x++) {
 
                     var normalHeight = v[x + cols1 * z] * 13
                                      + v[x + cols1 * (z + 1)] * 47
-                                     + v[(x + 1) + cols1 * (z + 1)] * 101
-                                     + v[(x + 1) + cols1 * z] * 211;
+                                     + v[(x + 1) + cols1 * (z + 1)] * 179
+                                     + v[(x + 1) + cols1 * z] * 509;
 
-                    faceHeights[z][x] = normalHeight;
+                    faceHeights[z * this.cols + x] = normalHeight;
 
                 }
 
             }
 
-            console.timeEnd('parseHeight');
-
             return faceHeights;
 
         },
 
-        _createGeometry: function(rectangles) {
+        _getRectAt: function(map, used, sx, sz) {
 
-            console.time('createGeometry');
+            var startValue = null,
+                size = 1,
+                v = 0,
+                x, z, val, i;
+
+            outer: while(true) {
+
+                v = size;
+
+                for(z = sz; z < sz + size; z++) {
+
+                    if (z >= this.rows) {
+                        break outer;
+                    }
+
+                    for(x = sx; x < sx + size; x++) {
+
+                        if (x < this.cols) {
+
+                            i = z * this.cols + x;
+                            val = map[i];
+
+                            if (startValue === null) {
+                                startValue = val;
+                            }
+
+                        } else {
+                            val = null;
+                        }
+
+                        if (val !== startValue || used[i]) {
+                            break outer;
+                        }
+
+                    }
+
+                }
+
+                size++;
+
+            }
+
+            v--;
+
+            for(z = sz; z < sz + v; z++) {
+                for(x = sx; x < sx + v; x++) {
+                    used[z * this.cols + x] = 1;
+                }
+            }
+
+            return [sx, sz, v, v];
+
+        },
+
+        _getRectangles: function(heights) {
+
+            var x, xl, gx, gxl,
+                z, zl, gz, gzl,
+                rects = [];
+
+            var used = new Uint8Array(this.rows * this.cols);
+
+            for(z = 0, zl = this.rows; z < zl; z++) {
+                for(x = 0, xl = this.cols; x < xl; x++) {
+                    if (used[z * xl + x] === 0) {
+                        rects.push(this._getRectAt(heights, used, x, z));
+                    }
+                }
+            }
+
+            return rects;
+
+        },
+
+        _createGeometry: function(rectangles) {
 
             // Calculate face rectangles
             var count = rectangles.length,
@@ -374,17 +362,20 @@
             this._quadList = new Array(count);
 
             var vertexMap = {};
+            var uid = 0;
             function getVertex(x, y, z) {
 
-                var id = x + '#' + y + '#' + z;
+                var id = x * 13 + y * 179 + z * 509;
                 if (vertexMap[id]) {
                     return vertexMap[id];
 
                 } else {
+                    uid++;
                     return new THREE.Vector3(x, y, z);
                 }
 
             }
+
 
             // Create faces, their vertices and quads
             var cols1 = (this.cols + 1);
@@ -485,15 +476,64 @@
 
             }
 
-            console.timeEnd('createGeometry');
-
-            console.time('mergeGeometry');
-
+            this.dynamic = false;
             this.computeFaceNormals();
 
-            // Get rid of THREE.js internal temp arrays
-            this.dynamic = false;
-            console.timeEnd('mergeGeometry');
+        },
+
+        // Taken from: http://www.cyberhead.de/download/articles/shadowmap/
+        // Optimized for JS by Ivo Wetzel
+        _createLightMap: function(hmap, smap, width, height, sx, sy, sz) {
+
+            var cpx = 0.0,
+                cpy = 0.0,
+                cpz = 0.0,
+                ldx = 0.0,
+                ldy = 0.0,
+                ldz = 0.0,
+                vl = 0.0;
+
+            // For every pixel on the map
+            for(var z = 0; z < height; z++) {
+
+                for(var x = 0; x < width; x++) {
+
+                    var sid = z * width + x;
+
+                    // Set current position in terrain
+                    cpx = x;
+                    cpy = hmap[sid];
+                    cpz = z;
+
+                    // Calc new direction of lightray
+                    ldx = sx - cpx;
+                    ldy = sy - cpy;
+                    ldz = sz - cpz;
+                    vl = Math.sqrt((ldx * ldx + ldy * ldy + ldz * ldz));
+
+                    smap[sid] = 255;
+
+                    // Start the test
+                    while(cpx >= 0 && cpx < width && cpz >= 0 && cpz < height && cpy < 255 &&
+                          (cpx !== sx || cpy !== sy || cpz !== sz)) {
+
+                        cpx += ldx / vl;
+                        cpy += ldy / vl;
+                        cpz += ldz / vl;
+
+                        // Hit?
+                        if (cpy <= hmap[Math.round(cpz) * width + Math.round(cpx)]) {
+                            smap[sid] = 0;
+                            break;
+                        }
+
+                    }
+
+                }
+
+            }
+
+            return smap;
 
         }
 
