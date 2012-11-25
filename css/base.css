@@ -1,0 +1,17 @@
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
+canvas {
+    margin:  0px auto;
+    display: block;
+    border: 2px solid black;
+}
+
+#controls {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
+

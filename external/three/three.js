@@ -1520,7 +1520,7 @@ THREE.Vector4.prototype = {
 						 + ( m13 - m31 ) * ( m13 - m31 )
 						 + ( m21 - m12 ) * ( m21 - m12 ) ); // used to normalize
 
-		if ( Math.abs( s ) < 0.001 ) s = 1;
+		if ( Math.abs( s ) < 0.001 ) s = 1; 
 
 		// prevent divide by zero, should not happen if matrix is orthogonal and should be
 		// caught by singularity test above, but I've left it in just in case
@@ -4456,7 +4456,7 @@ THREE.Quaternion.prototype = {
 		// http://www.mathworks.com/matlabcentral/fileexchange/
 		// 	20696-function-to-convert-between-dcm-euler-angles-quaternions-and-euler-vectors/
 		//	content/SpinCalc.m
-
+	
 		var c1 = Math.cos( v.x / 2 );
 		var c2 = Math.cos( v.y / 2 );
 		var c3 = Math.cos( v.z / 2 );
@@ -4472,42 +4472,42 @@ THREE.Quaternion.prototype = {
 			this.w = c1 * c2 * c3 - s1 * s2 * s3;
 
 		} else if ( order === 'YXZ' ) {
-
+	
 			this.x = s1 * c2 * c3 + c1 * s2 * s3;
 			this.y = c1 * s2 * c3 - s1 * c2 * s3;
 			this.z = c1 * c2 * s3 - s1 * s2 * c3;
 			this.w = c1 * c2 * c3 + s1 * s2 * s3;
-
+				
 		} else if ( order === 'ZXY' ) {
-
+	
 			this.x = s1 * c2 * c3 - c1 * s2 * s3;
 			this.y = c1 * s2 * c3 + s1 * c2 * s3;
 			this.z = c1 * c2 * s3 + s1 * s2 * c3;
 			this.w = c1 * c2 * c3 - s1 * s2 * s3;
-
+				
 		} else if ( order === 'ZYX' ) {
-
+	
 			this.x = s1 * c2 * c3 - c1 * s2 * s3;
 			this.y = c1 * s2 * c3 + s1 * c2 * s3;
 			this.z = c1 * c2 * s3 - s1 * s2 * c3;
 			this.w = c1 * c2 * c3 + s1 * s2 * s3;
-
+				
 		} else if ( order === 'YZX' ) {
-
+			
 			this.x = s1 * c2 * c3 + c1 * s2 * s3;
 			this.y = c1 * s2 * c3 + s1 * c2 * s3;
 			this.z = c1 * c2 * s3 - s1 * s2 * c3;
 			this.w = c1 * c2 * c3 - s1 * s2 * s3;
-
+				
 		} else if ( order === 'XZY' ) {
-
+			
 			this.x = s1 * c2 * c3 - c1 * s2 * s3;
 			this.y = c1 * s2 * c3 - s1 * c2 * s3;
 			this.z = c1 * c2 * s3 + s1 * s2 * c3;
 			this.w = c1 * c2 * c3 + s1 * s2 * s3;
-
+				
 		}
-
+		
 		return this;
 
 	},
@@ -4532,56 +4532,56 @@ THREE.Quaternion.prototype = {
 	setFromRotationMatrix: function ( m ) {
 
 		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
-
+		
 		// assumes the upper 3x3 of m is a pure rotation matrix (i.e, unscaled)
-
+		
 		var te = m.elements,
-
+			
 			m11 = te[0], m12 = te[4], m13 = te[8],
 			m21 = te[1], m22 = te[5], m23 = te[9],
 			m31 = te[2], m32 = te[6], m33 = te[10],
-
+			
 			trace = m11 + m22 + m33,
 			s;
-
+		
 		if( trace > 0 ) {
-
+		
 			s = 0.5 / Math.sqrt( trace + 1.0 );
-
+			
 			this.w = 0.25 / s;
 			this.x = ( m32 - m23 ) * s;
 			this.y = ( m13 - m31 ) * s;
 			this.z = ( m21 - m12 ) * s;
-
+		
 		} else if ( m11 > m22 && m11 > m33 ) {
-
+		
 			s = 2.0 * Math.sqrt( 1.0 + m11 - m22 - m33 );
-
+			
 			this.w = (m32 - m23 ) / s;
 			this.x = 0.25 * s;
 			this.y = (m12 + m21 ) / s;
 			this.z = (m13 + m31 ) / s;
-
+		
 		} else if (m22 > m33) {
-
+		
 			s = 2.0 * Math.sqrt( 1.0 + m22 - m11 - m33 );
-
+			
 			this.w = (m13 - m31 ) / s;
 			this.x = (m12 + m21 ) / s;
 			this.y = 0.25 * s;
 			this.z = (m23 + m32 ) / s;
-
+		
 		} else {
-
+		
 			s = 2.0 * Math.sqrt( 1.0 + m33 - m11 - m22 );
-
+			
 			this.w = ( m21 - m12 ) / s;
 			this.x = ( m13 + m31 ) / s;
 			this.y = ( m23 + m32 ) / s;
 			this.z = 0.25 * s;
-
+		
 		}
-
+	
 		return this;
 
 	},
@@ -6638,7 +6638,7 @@ THREE.PerspectiveCamera.prototype.updateProjectionMatrix = function () {
  * @author mrdoob / http://mrdoob.com/
  * @author alteredq / http://alteredqualia.com/
  */
-
+ 
 THREE.Light = function ( hex ) {
 
 	THREE.Object3D.call( this );
@@ -10338,13 +10338,13 @@ THREE.MeshPhongMaterial.prototype.clone = function () {
  *
  * parameters = {
  *  opacity: <float>,
-
+ 
  *  blending: THREE.NormalBlending,
  *  depthTest: <bool>,
-
+ 
  *  wireframe: <boolean>,
  *  wireframeLinewidth: <float>
- * }
+ * } 
  */
 
 THREE.MeshDepthMaterial = function ( parameters ) {
@@ -10377,11 +10377,11 @@ THREE.MeshDepthMaterial.prototype.clone = function () {
  *
  * parameters = {
  *  opacity: <float>,
-
+ 
  *  shading: THREE.FlatShading,
  *  blending: THREE.NormalBlending,
  *  depthTest: <bool>,
-
+ 
  *  wireframe: <boolean>,
  *  wireframeLinewidth: <float>
  * }
@@ -14992,7 +14992,7 @@ THREE.ShaderLib = {
 			"void main() {",
 
 				"vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
-				"vNormal =  normal;",
+				"vNormal = normalize( normalMatrix * normal );",
 
 				"gl_Position = projectionMatrix * mvPosition;",
 
@@ -15007,113 +15007,9 @@ THREE.ShaderLib = {
 
 			"void main() {",
 
-                "float intensity = dot(normalize(LightPosition),Normal);",
-				"gl_FragColor = vec4(intensity, intensity, intensity, opacity );",
+				"gl_FragColor = vec4( 0.5 * normalize( vNormal ) + 0.5, opacity );",
 
 			"}"
-
-		].join("\n")
-
-	},
-
-	'lambert4': {
-
-		uniforms: THREE.UniformsUtils.merge( [
-
-			THREE.UniformsLib[ "common" ],
-			THREE.UniformsLib[ "fog" ],
-			THREE.UniformsLib[ "lights" ],
-			THREE.UniformsLib[ "shadowmap" ],
-
-			{
-				"ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-				"emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-				"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) }
-			}
-
-		] ),
-
-		vertexShader: [
-
-            "uniform mat4 u_normalMatrix;",
-
-            "attribute vec3 vNormal;",
-            "attribute vec4 vTexCoord;",
-            "attribute vec4 vPosition;",
-            "uniform vec3 lightDir;",
-
-            "varying float v_Dot;",
-
-            "void main()",
-            "{",
-				"vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );",
-				"gl_Position = projectionMatrix * mvPosition;",
-            "    vec4 transNormal = u_normalMatrix * vec4(vNormal, 1);",
-            "    v_Dot = max(dot(transNormal.xyz, vec3(1.0, -1.0, 1.0)), 0.0);",
-            "}"
-
-		].join("\n"),
-
-		fragmentShader: [
-
-            "varying float v_Dot;",
-			"uniform float opacity;",
-			"uniform vec3 diffuse;",
-
-            "void main() {",
-            "    gl_FragColor = vec4(vec3(0.5, 0.5, 0.5) * v_Dot +1, opacity);",
-            "}"
-
-		].join("\n")
-
-	},
-
-	'lambert3': {
-		uniforms: THREE.UniformsUtils.merge( [
-
-			THREE.UniformsLib[ "common" ],
-			THREE.UniformsLib[ "fog" ],
-			THREE.UniformsLib[ "lights" ],
-			THREE.UniformsLib[ "shadowmap" ],
-
-			{
-				"ambient"  : { type: "c", value: new THREE.Color( 0xffffff ) },
-				"emissive" : { type: "c", value: new THREE.Color( 0x000000 ) },
-				"wrapRGB"  : { type: "v3", value: new THREE.Vector3( 1, 1, 1 ) }
-			}
-
-		] ),
-
-		vertexShader: [
-
-            "uniform mat4 u_modelViewProjMatrix;",
-            "uniform mat4 u_normalMatrix;",
-            "uniform vec3 lightDir;",
-
-            "attribute vec3 vNormal;",
-            "attribute vec4 vTexCoord;",
-            "attribute vec4 vPosition;",
-
-            "varying float v_Dot;",
-
-            "void main()",
-            "{",
-            "    gl_Position = u_modelViewProjMatrix * vPosition;",
-            "    vec4 transNormal = u_normalMatrix * vec4(vNormal, 1);",
-            "    v_Dot = max(dot(transNormal.xyz, lightDir), 0.0);",
-            "}"
-
-		].join("\n"),
-
-		fragmentShader: [
-
-            "varying float v_Dot;",
-			"uniform float opacity;",
-			"uniform vec3 diffuse;",
-
-            "void main() {",
-            "    gl_FragColor = vec4(diffuse * v_Dot, opacity);",
-            "}"
 
 		].join("\n")
 
@@ -25511,7 +25407,7 @@ THREE.FontUtils = {
 
 THREE.FontUtils.generateShapes = function( text, parameters ) {
 
-	// Parameters
+	// Parameters 
 
 	parameters = parameters || {};
 
@@ -25758,7 +25654,7 @@ THREE.FontUtils.generateShapes = function( text, parameters ) {
 self._typeface_js = { faces: THREE.FontUtils.faces, loadFace: THREE.FontUtils.loadFace };/**
  * @author zz85 / http://www.lab4games.net/zz85/blog
  * Extensible curve object
- *
+ * 
  * Some common of Curve methods
  * .getPoint(t), getTangent(t)
  * .getPointAt(u), getTagentAt(u)
@@ -25867,8 +25763,8 @@ THREE.Curve.prototype.getLengths = function ( divisions ) {
 
 	if ( !divisions ) divisions = (this.__arcLengthDivisions) ? (this.__arcLengthDivisions): 200;
 
-	if ( this.cacheArcLengths
-		&& ( this.cacheArcLengths.length == divisions + 1 )
+	if ( this.cacheArcLengths 
+		&& ( this.cacheArcLengths.length == divisions + 1 ) 
 		&& !this.needsUpdate) {
 
 		//console.log( "cached", this.cacheArcLengths );
@@ -26018,7 +25914,7 @@ THREE.Curve.prototype.getTangent = function( t ) {
 
 	var pt1 = this.getPoint( t1 );
 	var pt2 = this.getPoint( t2 );
-
+	
 	var vec = pt2.clone().subSelf(pt1);
 	return vec.normalize();
 
@@ -26472,7 +26368,7 @@ THREE.SplineCurve3 = THREE.Curve.create(
 // 	v.z = THREE.Curve.Utils.tangentSpline( t, pt0.z, pt1.z, pt2.z, pt3.z );
 
 // 	return v;
-
+		
 // }
 
 /**************************************************************
@@ -26498,7 +26394,7 @@ THREE.ClosedSplineCurve3 = THREE.Curve.create(
 
         intPoint = Math.floor( point );
         weight = point - intPoint;
-
+            
         intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
         c[ 0 ] = ( intPoint - 1 ) % points.length;
         c[ 1 ] = ( intPoint ) % points.length;
@@ -26508,7 +26404,7 @@ THREE.ClosedSplineCurve3 = THREE.Curve.create(
         v.x = THREE.Curve.Utils.interpolate( points[ c[ 0 ] ].x, points[ c[ 1 ] ].x, points[ c[ 2 ] ].x, points[ c[ 3 ] ].x, weight );
         v.y = THREE.Curve.Utils.interpolate( points[ c[ 0 ] ].y, points[ c[ 1 ] ].y, points[ c[ 2 ] ].y, points[ c[ 3 ] ].y, weight );
         v.z = THREE.Curve.Utils.interpolate( points[ c[ 0 ] ].z, points[ c[ 1 ] ].z, points[ c[ 2 ] ].z, points[ c[ 3 ] ].z, weight );
-
+        
         return v;
 
     }
@@ -26528,7 +26424,7 @@ THREE.CurvePath = function () {
 
 	this.curves = [];
 	this.bends = [];
-
+	
 	this.autoClose = false; // Automatically closes the path
 };
 
@@ -26552,11 +26448,11 @@ THREE.CurvePath.prototype.closePath = function() {
 	// Add a line curve if start and end of lines are not connected
 	var startPoint = this.curves[0].getPoint(0);
 	var endPoint = this.curves[this.curves.length-1].getPoint(1);
-
+	
 	if (!startPoint.equals(endPoint)) {
 		this.curves.push( new THREE.LineCurve(endPoint, startPoint) );
 	}
-
+	
 };
 
 // To get accurate point with reference to
@@ -26696,14 +26592,14 @@ THREE.CurvePath.prototype.getBoundingBox = function () {
 		maxX: maxX,
 		maxY: maxY,
 		centroid: sum.divideScalar( il )
-
+	
 	};
 
 	if (v3) {
 
 		ret.maxZ = maxZ;
 		ret.minZ = minZ;
-
+	
 	}
 
 	return ret;
@@ -27042,14 +26938,14 @@ THREE.Path.prototype.arc = function ( aX, aY, aRadius,
 
 	this.absarc(aX + x0, aY + y0, aRadius,
 		aStartAngle, aEndAngle, aClockwise );
-
+	
  };
 
  THREE.Path.prototype.absarc = function ( aX, aY, aRadius,
 									  aStartAngle, aEndAngle, aClockwise ) {
 	this.absellipse(aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise);
  };
-
+ 
 THREE.Path.prototype.ellipse = function ( aX, aY, xRadius, yRadius,
 									  aStartAngle, aEndAngle, aClockwise ) {
 
@@ -27061,7 +26957,7 @@ THREE.Path.prototype.ellipse = function ( aX, aY, xRadius, yRadius,
 		aStartAngle, aEndAngle, aClockwise );
 
  };
-
+ 
 
 THREE.Path.prototype.absellipse = function ( aX, aY, xRadius, yRadius,
 									  aStartAngle, aEndAngle, aClockwise ) {
@@ -27276,7 +27172,7 @@ THREE.Path.prototype.getPoints = function( divisions, closedPath ) {
 			//console.log(points);
 
 		  break;
-
+		  
 		case THREE.PathActions.ELLIPSE:
 
 			var aX = args[ 0 ], aY = args[ 1 ],
@@ -28774,7 +28670,7 @@ THREE.KeyFrameAnimation.prototype.stop = function() {
 	// reset JIT matrix and remove cache
 
 	for ( var h = 0; h < this.data.hierarchy.length; h++ ) {
-
+        
         var obj = this.hierarchy[ h ];
 		var node = this.data.hierarchy[ h ];
 
@@ -30641,7 +30537,7 @@ THREE.LatheGeometry = function ( points, steps, angle ) {
 				new THREE.UV( 1 - ( i + 1 ) / _steps, k / kl ),
 				new THREE.UV( 1 - ( i + 1 ) / _steps, ( k + 1 ) / kl ),
 				new THREE.UV( 1 - i / _steps, ( k + 1 ) / kl )
-
+				
 			] );
 
 		}
@@ -31202,7 +31098,7 @@ THREE.TubeGeometry.prototype = Object.create( THREE.Geometry.prototype );
 // For computing of Frenet frames, exposing the tangents, normals and binormals the spline
 THREE.TubeGeometry.FrenetFrames = function(path, segments, closed) {
 
-	var
+	var 
 		tangent = new THREE.Vector3(),
 		normal = new THREE.Vector3(),
 		binormal = new THREE.Vector3(),
@@ -31642,11 +31538,11 @@ THREE.ParametricGeometry = function ( func, slices, stacks, useTris ) {
 THREE.ParametricGeometry.prototype = Object.create( THREE.Geometry.prototype );
 /**
  * @author qiao / https://github.com/qiao
- * @fileoverview This is a convex hull generator using the incremental method.
+ * @fileoverview This is a convex hull generator using the incremental method. 
  * The complexity is O(n^2) where n is the number of vertices.
  * O(nlogn) algorithms do exist, but they are much more complicated.
  *
- * Benchmark:
+ * Benchmark: 
  *
  *  Platform: CPU: P7350 @2.00GHz Engine: V8
  *
@@ -31663,7 +31559,7 @@ THREE.ConvexGeometry = function( vertices ) {
 
 	THREE.Geometry.call( this );
 
-	var faces = [ [ 0, 1, 2 ], [ 0, 2, 1 ] ];
+	var faces = [ [ 0, 1, 2 ], [ 0, 2, 1 ] ]; 
 
 	for ( var i = 3; i < vertices.length; i++ ) {
 
@@ -31732,7 +31628,7 @@ THREE.ConvexGeometry = function( vertices ) {
 		// construct the new faces formed by the edges of the hole and the vertex
 		for ( var h = 0; h < hole.length; h++ ) {
 
-			faces.push( [
+			faces.push( [ 
 				hole[ h ][ 0 ],
 				hole[ h ][ 1 ],
 				vertexId
@@ -31755,7 +31651,7 @@ THREE.ConvexGeometry = function( vertices ) {
 		// distance from face to origin
 		var dist = n.dot( va );
 
-		return n.dot( vertex ) >= dist;
+		return n.dot( vertex ) >= dist; 
 
 	}
 
@@ -31784,7 +31680,7 @@ THREE.ConvexGeometry = function( vertices ) {
 	 */
 	function equalEdge( ea, eb ) {
 
-		return ea[ 0 ] === eb[ 1 ] && ea[ 1 ] === eb[ 0 ];
+		return ea[ 0 ] === eb[ 1 ] && ea[ 1 ] === eb[ 0 ]; 
 
 	}
 
@@ -31834,7 +31730,7 @@ THREE.ConvexGeometry = function( vertices ) {
 	// Convert faces into instances of THREE.Face3
 	for ( var i = 0; i < faces.length; i++ ) {
 
-		this.faces.push( new THREE.Face3(
+		this.faces.push( new THREE.Face3( 
 				faces[ i ][ 0 ],
 				faces[ i ][ 1 ],
 				faces[ i ][ 2 ]
