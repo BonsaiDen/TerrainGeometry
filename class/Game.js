@@ -20,12 +20,10 @@ var Game = Class(function(update, render) {
         this.cube = mesh;
         this.cube.useQuaternion = true;
         this.cubeAngle = 0;
+        this.cubeOffset = 0;
         this.scene.add(mesh);
 
         // Light
-        light = new THREE.SpotLight(0xffffff, 1);
-        light.position.set(0, 50, 150);
-        this.scene.add(light);
 
         light = new THREE.DirectionalLight( 0xffffff );
         light.position.set( 1, 1, 1 );
@@ -38,18 +36,19 @@ var Game = Class(function(update, render) {
         // Camera
         this.camera.position.set(0, 50, 150);
         this.camera.lookAt(this.scene.position);
-	    this.controls = new THREE.OrbitControls(this.camera);
+        this.controls = new THREE.OrbitControls(this.camera);
 
         // Load Image and create Terrain
         var img = new Image();
+        var uv = new Image();
         img.onload = function() {
 
-            var terrain = new TerrainGeometry(100, 100, img, 0.1);
-            //material = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
-            material = new THREE.MeshLambertMaterial( { map: new THREE.Texture(img) } );
+            var terrain = new TerrainGeometry(300, 300, img, 8, 32);
+            material = new THREE.MeshNormalMaterial({ color: 0xffcc00 });
+            material = new THREE.MeshLambertMaterial( { map: new THREE.Texture(uv) , shading: THREE.SmoothShading });
 
             material.map.needsUpdate = true;
-            material.wireframe = true;
+            //material.wireframe = true;
 
             mesh = new THREE.Mesh(terrain, material);
             that.scene.add(mesh);
@@ -57,8 +56,8 @@ var Game = Class(function(update, render) {
 
         };
 
+        uv.src = 'images/uv.png';
         img.src = 'images/height.png';
-
 
     },
 
@@ -66,19 +65,20 @@ var Game = Class(function(update, render) {
 
         if (this.terrain) {
 
-            this.cubeAngle += 0.01;
+            //this.cubeAngle += 0.01;
+            this.cubeOffset += 0.01;
 
-            var x = Math.sin(this.cubeAngle) * 40,
-                z = Math.cos(this.cubeAngle) * 40;
+            var x = Math.sin(this.cubeOffset) * 40, //-40, //
+                z = 40; //Math.cos(this.cubeOffset) * 40;
 
             this.cube.position.x = x;
             this.cube.position.y = (this.terrain.getHeightAt(x, z) || 0) + 2;
             this.cube.position.z = z;
 
             this.cube.quaternion.setFromEuler({
-                x: this.terrain.getAngleAt(x, z, 1, this.cubeAngle),
+                x: 0, //this.terrain.getAngleAt(x, z, 2, this.cubeAngle),
                 y: this.cubeAngle,
-                z: this.terrain.getAngleAt(x, z, 1, this.cubeAngle - Math.PI / 2)
+                z: this.terrain.getAngleAt(x, z, 2, this.cubeAngle - Math.PI / 2)
             });
 
         }
