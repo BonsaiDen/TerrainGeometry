@@ -49,25 +49,21 @@
 
         getHeightAt: function(x, z) {
 
-            var ox = this.position.x + (this._min.x * this.scale.x),
-                oz = this.position.z + (this._min.z * this.scale.z);
-
-            if (x <= this._min.x * this.scale.x
-                || x >= this._max.x * this.scale.x
-                || z <= this._min.z * this.scale.z
-                || z >= this._max.z * this.scale.z) {
+            if (x <= this._min.x * this.scale.x || x >= this._max.x * this.scale.x
+                || z <= this._min.z * this.scale.z || z >= this._max.z * this.scale.z) {
 
                 return null;
             }
 
-            var col = Math.floor((x - ox) / (this._quadWidth * this.scale.x)),
-                row = Math.floor((z - oz) / (this._quadHeight * this.scale.z));
-
-            var dx = (x - this.position.x) / this.scale.x,
+            var ox = this.position.x + (this._min.x * this.scale.x),
+                oz = this.position.z + (this._min.z * this.scale.z),
+                col = Math.floor((x - ox) / (this._quadWidth * this.scale.x)),
+                row = Math.floor((z - oz) / (this._quadHeight * this.scale.z)),
+                dx = (x - this.position.x) / this.scale.x,
                 dz = (z - this.position.z) / this.scale.z;
 
-            if (this._quadGrid[row] !== undefined && this._quadGrid[row][col] !== undefined) {
-                return this.getQuadHeightAt(dx, dz, this._quadGrid[row][col]) * this.scale.y + this.position.y;
+            if (row >= 0 || row < this.rows || col >= 0 && col < this.col) {
+                return this.getQuadHeightAt(dx, dz, this._quadGrid[row * this.cols + col]) * this.scale.y + this.position.y;
 
             } else {
                 return this.position.y;
@@ -151,23 +147,6 @@
 
         },
 
-        getVertexPixels: function(vx, vz) {
-
-            var p = [];
-            for(var z = vz - 1; z <= vz; z++) {
-                if (z >= 0 && z < this.rows) {
-                    for(var x = vx - 1; x <= vx; x++) {
-                        if (x >= 0 && x < this.cols) {
-                            p.push([x, z]);
-                        }
-                    }
-                }
-            }
-
-            return p;
-
-        },
-
         getRectPointAt: function(map, x, z) {
 
             var row = map[z];
@@ -176,48 +155,6 @@
 
             } else {
                 return null;
-            }
-
-        },
-
-        getRectZ: function(map, used, sx, sz) {
-
-            var x = sx,
-                z = sz,
-                startValue = this.getRectPointAt(map, x, z),
-                col = 0;
-
-            while(true) {
-
-                // Go to down and see if we can expand
-                var valid = this.getRectPointAt(map, x, z) === startValue
-                            && !used[z][x];
-
-                if (valid) {
-
-                    // Go down all rows and see how far we can expand
-                    col = 0;
-                    cols: while(true) {
-
-                        for(var i = sz; i < z + 1; i++) {
-
-                            var xValue = this.getRectPointAt(map, sx + col, i);
-                            if (xValue !== startValue || used[i][sx + col]) {
-                                break cols;
-                            }
-
-                        }
-
-                        col++;
-
-                    }
-
-                    z++;
-
-                } else {
-                    return [col, z - sz];
-                }
-
             }
 
         },
@@ -252,6 +189,8 @@
 
         getRectangles: function(map) {
 
+            console.time('getRectangles');
+
             var x, xl,
                 z, zl,
                 faces = {};
@@ -285,6 +224,7 @@
                 }
             }
 
+            console.timeEnd('getRectangles');
             return rects;
 
         },
@@ -306,13 +246,10 @@
             this._quadGrid = null;
             this._quadList = null;
 
-            this._pixelHeight = data;
+            var faceHeights = this._parseHeight(data, scale);
 
-            var faceHeights = this._parseHeight(scale);
             this._createGeometry(this.getRectangles(faceHeights));
-
             this._vertexHeight = null;
-            this._pixelHeight = null;
 
         },
 
@@ -323,29 +260,23 @@
             smoothing = smoothing || 0.1;
 
             var canvas = document.createElement('canvas'),
-                context = canvas.getContext('2d');
+                context = canvas.getContext('2d'),
+                w = img.width,
+                h = img.height,
+                count = w * h;
 
-            canvas.width = img.width;
-            canvas.height = img.height;
+            canvas.width = w;
+            canvas.height = h;
             context.drawImage(img, 0, 0);
 
-            var data = context.getImageData(0, 0, img.width, img.height),
+            var data = context.getImageData(0, 0, w, h),
                 pix = data.data,
-                map = new Array(img.height),
-                i = 0,
-                x, z;
+                map = new Uint8Array(count);
 
             // Load pixel heights
-            for(z = 0; z < img.height; z++) {
-
-                map[z] = new Array(img.width);
-                for(x = 0; x < img.width; x++) {
-                    var value = (pix[i] + pix[i + 1] + pix[i + 2]) / 3;
-                    value = Math.floor(value / smoothing) * smoothing;
-                    map[z][x] = value;
-                    i += 4;
-                }
-
+            for(var e = 0, i = 0; e < count; e++) {
+                map[e] = Math.floor(((pix[i] + pix[i + 1] + pix[i + 2]) / 3) / smoothing) * smoothing;
+                i += 4;
             }
 
             console.timeEnd('loadImage');
@@ -354,7 +285,7 @@
 
         },
 
-        _parseHeight: function(scale) {
+        _parseHeight: function(data, scale) {
 
             console.time('parseHeight');
 
@@ -364,29 +295,30 @@
                 w2 = this.width / 2,
                 h2 = this.height / 2;
 
-            // TODO convert into 1D arrays?
-            this._vertexHeight = new Array(rows1);
-
-            // Average vertice heights
-            var vertexHeight = new Array(rows1 * cols1);
-            var e = 0;
+            this._vertexHeight = new Float32Array(rows1 * cols1);
             for(z = 0; z < rows1; z++) {
 
-                this._vertexHeight[z] = new Array(cols1);
                 for(x = 0; x < cols1; x++) {
 
-                    var pixels = this.getVertexPixels(x, z),
-                        l = pixels.length,
-                        height = 0;
-
-                    for(var i = 0; i < l; i++) {
-                        height += this._pixelHeight[pixels[i][1]][pixels[i][0]];
+                    var l = 0, height = 0;
+                    for(var pz = z - 1; pz <= z; pz++) {
+                        if (pz >= 0 && pz < this.rows) {
+                            for(var px = x - 1; px <= x; px++) {
+                                if (px >= 0 && px < this.cols) {
+                                    height += data[pz * this.cols + px];
+                                    l++;
+                                }
+                            }
+                        }
                     }
 
-                    height /= l;
+                    if (l !== 0) {
+                        height /= l;
+                    }
+
                     height /= scale;
-                    this._vertexHeight[z][x] = height;
-                    vertexHeight[e++] = height;
+
+                    this._vertexHeight[z * cols1 + x] = height;
 
                 }
 
@@ -394,30 +326,25 @@
 
             // Generate Face height data
             var faceHeights = new Array(this.rows);
-            this._quadGrid = new Array(this.rows);
+            this._quadGrid = new Array(this.rows * this.cols);
 
+            var v = this._vertexHeight;
             for(z = 0; z < this.rows; z++) {
 
                 faceHeights[z] = new Array(this.cols);
-                this._quadGrid[z] = new Array(this.cols);
 
                 for(x = 0; x < this.cols; x++) {
 
-                    var a = x + cols1 * z,
-                        b = x + cols1 * (z + 1),
-                        c = (x + 1) + cols1 * (z + 1),
-                        d = (x + 1) + cols1 * z,
-                        v = vertexHeight,
-                        normalHeight = v[a] + '#' + v[b] + '#' + v[c] + '#' + v[d];
+                    var normalHeight = v[x + cols1 * z] * 13
+                                     + v[x + cols1 * (z + 1)] * 47
+                                     + v[(x + 1) + cols1 * (z + 1)] * 101
+                                     + v[(x + 1) + cols1 * z] * 211;
 
                     faceHeights[z][x] = normalHeight;
-                    this._quadGrid[z][x] = 0;
 
                 }
 
             }
-
-            vertexHeight.length = 0;
 
             console.timeEnd('parseHeight');
 
@@ -434,6 +361,8 @@
                 normal = new THREE.Vector3(0, 1, 0),
                 w2 = this.width / 2,
                 h2 = this.height / 2,
+                qw = this._quadWidth,
+                qh = this._quadHeight,
                 quadId = 0,
                 vertexId = 0,
                 faceId = 0;
@@ -458,6 +387,7 @@
             }
 
             // Create faces, their vertices and quads
+            var cols1 = (this.cols + 1);
             for(var i = 0; i < count; i++) {
 
                 // Rectangle Data
@@ -468,10 +398,10 @@
                     h = rect[3];
 
                 // Height
-                var ay = this._vertexHeight[z][x],
-                    by = this._vertexHeight[z + h][x],
-                    cy = this._vertexHeight[z + h][x + w],
-                    dy = this._vertexHeight[z][x + w];
+                var ay = this._vertexHeight[z * cols1 + x],
+                    by = this._vertexHeight[(z + h) * cols1 + x],
+                    cy = this._vertexHeight[(z + h) * cols1 + (x + w)],
+                    dy = this._vertexHeight[z * cols1 + (x + w)];
 
                 // Faces
                 var faceA, faceB,
@@ -529,10 +459,10 @@
                 this.faces[faceId++] = faceB;
 
                 // Vertices
-                var a = getVertex(    (x) * this._quadWidth - w2, ay,     (z) * this._quadHeight - h2),
-                    b = getVertex(    (x) * this._quadWidth - w2, by, (z + h) * this._quadHeight - h2),
-                    c = getVertex((x + w) * this._quadWidth - w2, cy, (z + h) * this._quadHeight - h2),
-                    d = getVertex((x + w) * this._quadWidth - w2, dy,     (z) * this._quadHeight - h2);
+                var a = getVertex(    (x) * qw - w2, ay,     (z) * qh - h2),
+                    b = getVertex(    (x) * qw - w2, by, (z + h) * qh - h2),
+                    c = getVertex((x + w) * qw - w2, cy, (z + h) * qh - h2),
+                    d = getVertex((x + w) * qw - w2, dy,     (z) * qh - h2);
 
                 this.vertices[vertexId++] = a;
                 this.vertices[vertexId++] = b;
@@ -540,9 +470,14 @@
                 this.vertices[vertexId++] = d;
 
                 // Map quads
-                for(var qz = z; qz < z + h; qz++) {
-                    for(var qx = x; qx < x + w; qx++) {
-                        this._quadGrid[qz][qx] = quadId;
+                if (w === 1 && h === 1) {
+                    this._quadGrid[z * this.cols + x] = quadId;
+
+                } else {
+                    for(var qz = z; qz < z + h; qz++) {
+                        for(var qx = x; qx < x + w; qx++) {
+                            this._quadGrid[qz * this.cols + qx] = quadId;
+                        }
                     }
                 }
 
@@ -554,10 +489,7 @@
 
             console.time('mergeGeometry');
 
-            // Update normals and other data
-            //this.computeCentroids();
             this.computeFaceNormals();
-            //this.computeVertexNormals();
 
             // Get rid of THREE.js internal temp arrays
             this.dynamic = false;

@@ -43,16 +43,18 @@ var Game = Class(function(update, render) {
         var uv = new Image();
         img.onload = function() {
 
-            var terrain = new TerrainGeometry(300, 300, img, 8, 32);
+            var terrain = new TerrainGeometry(300, 300, img, 8, 8);
             material = new THREE.MeshNormalMaterial({ color: 0xffcc00 });
-            material = new THREE.MeshLambertMaterial( { map: new THREE.Texture(uv) , shading: THREE.SmoothShading });
+            //material = new THREE.MeshLambertMaterial( { map: new THREE.Texture(uv) , shading: THREE.SmoothShading });
 
-            material.map.needsUpdate = true;
+            //material.map.needsUpdate = true;
             //material.wireframe = true;
 
             mesh = new THREE.Mesh(terrain, material);
             that.scene.add(mesh);
             that.terrain = terrain;
+
+            that.start();
 
         };
 
@@ -68,15 +70,15 @@ var Game = Class(function(update, render) {
             //this.cubeAngle += 0.01;
             this.cubeOffset += 0.01;
 
-            var x = Math.sin(this.cubeOffset) * 40, //-40, //
-                z = 40; //Math.cos(this.cubeOffset) * 40;
+            var x = 0, //Math.sin(this.cubeOffset) * 40, //-40, //
+                z = Math.cos(this.cubeOffset) * 40;
 
             this.cube.position.x = x;
             this.cube.position.y = (this.terrain.getHeightAt(x, z) || 0) + 2;
             this.cube.position.z = z;
 
             this.cube.quaternion.setFromEuler({
-                x: 0, //this.terrain.getAngleAt(x, z, 2, this.cubeAngle),
+                x: this.terrain.getAngleAt(x, z, 2, this.cubeAngle),
                 y: this.cubeAngle,
                 z: this.terrain.getAngleAt(x, z, 2, this.cubeAngle - Math.PI / 2)
             });

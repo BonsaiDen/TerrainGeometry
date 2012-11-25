@@ -4,7 +4,7 @@ window.onload = function() {
     // Setup basic game
     var game = new Game(30, 30);
     game.init(window.document.body, 640, 480);
-    game.start();
+    //game.start();
 
     window.game = game;
 
